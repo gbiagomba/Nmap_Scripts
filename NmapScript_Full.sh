@@ -48,8 +48,8 @@ function MC()
 {
     echo
     echo "Masscan - Checking all 65,535 ports"
-    masscan -iL $pth/$targetf --ping -oL $pth/MASSCAN/masscan_pingsweep
-    masscan -iL $pth/$targetf -p 0-65535 --open-only -oL $pth/MASSCAN/masscan_output
+    masscan -iL $targetf --ping -oL $pth/MASSCAN/masscan_pingsweep
+    masscan -iL $targetf -p 0-65535 --open-only -oL $pth/MASSCAN/masscan_output
     OpenPORT=($(cat $pth/MASSCAN/masscan_output | cut -d " " -f 3 | grep -v masscan | sort | uniq))
 }
 
@@ -78,6 +78,8 @@ function NM_Ping()
     xsltproc icmpnetmask.xml -o icmpnetmask.html
 
     # Nmap - Pingsweep using TCP SYN and UDP
+    echo
+    echo "Pingsweep using TCP SYN and UDP"
     nmap -R --reason --resolve-all -sP -PS 21,22,23,25,53,80,88,110,111,135,139,443,445,8080 -iL $pth/$targetf -oA $pth/pingsweepTCP
     nmap -R --reason --resolve-all -sP -PU 53,111,135,137,161,500 -iL $pth/$targetf -oA $pth/pingsweepUDP
     cat $pth/pingsweepTCP.gnmap | grep Up | cut -d ' ' -f 2 >> $pth/live
