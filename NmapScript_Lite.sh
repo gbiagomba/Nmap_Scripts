@@ -17,7 +17,7 @@ if [ $target != "$(ls $PWD | grep $target)" ]; then
     echo usage 'NmapScrip_Lite.sh targets.txt'
     exit
 elif [ -z $target ]; then
-    target=$PWD/targets
+    target=$PWD/targets.txt
 fi
 
 # Setting up work envrionment
@@ -45,30 +45,54 @@ xsltproc $pth/icmpecho/pingsweep.xml -o report/pingsweep.html
 # Systems that respond to ping (finding)
 echo
 echo "Sorting what systems responded to our previous array of pingsweeps"
-cat $pth/live | sort | uniq > $pth/livehosts
+livehosts=($(cat $pth/live | sort -R | uniq))
+
+# ------------------------------------
+# Setting  parallel stack
+# ------------------------------------
+
+declare -i MAX=$(expr ${#livehosts[@]} - 1)
+
+if [ "$MAX" -gt "1" ] && [ "$MAX" -lt "10" ]; then
+    declare -i POffset=$MAX
+elif [ "$MAX" -gt "10" ] || [ "$MAX" -lt "0" ]; then
+    echo "How many nmap processess do you want to run?"
+    echo "Default: 5, Max: 10, Min: 1"
+    read POffset
+    if [ "$POffset" -gt "10" ] || [ "$POffset" -lt 1 ] || [ -z "$POffset" ]; then
+        echo "Incorrect value, setting offset to default"
+        declare -i POffset=5
+    fi
+fi
 
 # ------------------------------------
 # Port knocking using Masscan and Nmap
 # ------------------------------------
 
-# Masscan - Checking the top 100 TCP/UDP ports used
+# Masscan - Checking the top 200 TCP/UDP ports used
 echo
-echo "Masscan - Checking the top 100 TCP/UDP ports used"
-masscan -iL $pth/livehosts -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $pth/masscan/masscan_output
-OpenPORT=($(cat $pth/masscan/masscan_output | cut -d " " -f 3 | grep -v masscan | sort | uniq))
+echo "Masscan - Checking the top 200 TCP/UDP ports used"
+masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $pth/masscan/masscan_output --rate 100000 $(echo ${livehosts[*]})
 
-# Nmap - Checking the top 100 TCP/UDP Ports used
+# Nmap - Checking the top 200 TCP/UDP Ports used
 echo
-echo "Stealth network mapping scan"
-nmap -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R  --reason --resolve-all -sS -sU -sV -T4 -iL $pth/livehosts -oA Final
+echo "Nmap - Checking the top 200 TCP/UDP ports used"
+declare -i MIN=$POffset
+for i in $(seq 0 $MAX); do
+    gnome-terminal --tab -q -- nmap -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R  --reason --resolve-all -sS -sU -sV -T4 -oA nmap_output-$i $(echo ${livehosts[$i]})
+    if (( $i == $MIN )); then 
+        let "MIN+=$POffset"
+        while pgrep -x nmap > /dev/null; do sleep 10; done
+    fi
+done
 
 # Nmap - Firewall evasion
-echo
-echo "Stealth network mapping scan with Firewall evasion techniques"
+# echo
+# echo "Stealth network mapping scan with Firewall evasion techniques"
 # nmap -D RND:10 --badsum --data-length 24 --mtu 24 --spoof-mac Dell --randomize-hosts -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R -sS -sU -sV -iL $pth/livehosts --script=vulners -oA $pth/fw_evade/FW_Evade
-nmap -f -mtu 24 --randomize-hosts --reason --resolve-all --spoof-mac Dell -T2 -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R -sS -sU -sV --script=vulners -iL $pth/livehosts -oA $pth/fw_evade/FW_Evade
-nmap --append-output -D RND:10 --badsum --data-length 24 --randomize-hosts -reason --resolve-all -T2 -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R -sS -sU -sV --script=vulners -iL $pth/livehosts -oA $pth/fw_evade/FW_Evade
-xsltproc $pth/fw_evade/FW_Evade.xml -o $pth/report/FW_Evade.html
+# nmap -f -mtu 24 --randomize-hosts --reason --resolve-all --spoof-mac Dell -T2 -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R -sS -sU -sV --script=vulners -iL $pth/livehosts -oA $pth/fw_evade/FW_Evade
+# nmap --append-output -D RND:10 --badsum --data-length 24 --randomize-hosts -reason --resolve-all -T2 -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R -sS -sU -sV --script=vulners -iL $pth/livehosts -oA $pth/fw_evade/FW_Evade
+# xsltproc $pth/fw_evade/FW_Evade.xml -o $pth/report/FW_Evade.html
 
 # Empty file cleanup
 find $pth -size 0c -type f -exec rm -rf {} \;
