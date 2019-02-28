@@ -9,6 +9,16 @@
 #              Side-note: You shouldd note this is the heavyweigh version,\n
 #              yes there is a heavyweigh (i.e., full) version available!\n
 
+# Starting script
+echo "
+  ____            _       _     _           _             _   _             
+ / ___|  ___ _ __(_)_ __ | |_  (_)___   ___| |_ __ _ _ __| |_(_)_ __   __ _ 
+ \___ \ / __| '__| | '_ \| __| | / __| / __| __/ _` | '__| __| | '_ \ / _` |
+  ___) | (__| |  | | |_) | |_  | \__ \ \__ \ || (_| | |  | |_| | | | | (_| |
+ |____/ \___|_|  |_| .__/ \__| |_|___/ |___/\__\__,_|_|   \__|_|_| |_|\__, |
+                   |_|                                                |___/  
+"
+
 # Grabbing the file name from the user
 target=$1
 if [ $target != "$(ls $PWD | grep $target)" ]; then
@@ -103,3 +113,13 @@ unset OpenPORT
 unset PORTS
 unset target
 set -u
+
+# Starting script
+echo "
+  _____           _          __                 _       _   
+ | ____|_ __   __| |   ___  / _|  ___  ___ _ __(_)_ __ | |_ 
+ |  _| | '_ \ / _` |  / _ \| |_  / __|/ __| '__| | '_ \| __|
+ | |___| | | | (_| | | (_) |  _| \__ \ (__| |  | | |_) | |_ 
+ |_____|_| |_|\__,_|  \___/|_|   |___/\___|_|  |_| .__/ \__|
+                                                 |_|          
+"
