@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Author: Gilles Biagomba
 # Program: NmapScrip_lite.sh
 # Description: This script designed to perform a port knock scan of a target network.\n
@@ -10,7 +10,7 @@
 #              yes there is a heavyweigh (i.e., full) version available!\n
 
 # Logging 
-exec 1> >(logger -s -t $(basename $0)) 2>&1
+# exec 1> >(logger -s -t $(basename $0)) 2>&1
 
 # Starting script
 echo "
@@ -34,7 +34,7 @@ elif [ -z $target ]; then
 fi
 
 # Setting up work envrionment
-mkdir -p fw_evade pingsweep masscan report
+mkdir -p nmap/ masscan/ report/
 
 # Variables - Set these
 declare -a PORTS=(7 9 13 17 19 37 49 53 80 88 106 111 113 119 120 123 135 139 158 177 179 199 389 427 443 445 465 497 500 518 520 548 554 587 593 623 626 631 646 873 990 993 995 1110 1433 1701 1720 1723 1755 1900 2000 2049 2121 2717 3000 3128 3283 3306 3389 3456 3703 3986 4444 4500 4899 5000 5009 5051 5060 5101 5190 5353 5357 5432 5631 5632 5666 5800 5900 6646 7000 7002 7004 7070 8000 8443 8888 9100 9200 10000 17185 20031 30718 31337 32768 32771 32815 33281 49156 49188 65024 1022-1023 1025-1029 1025-1030 110-111 135-139 143-144 1433-1434 161-162 1645-1646 1718-1719 1812-1813 2000-2001 2048-2049 21-23 2222-2223 25-26 32768-32769 443-445 49152-49154 49152-49157 49181-49182 49185-49186 49190-49194 49200-49201 513-515 514-515 543-544 6000-6001 67-69 79-81 8008-8009 8080-8081 996-999 9999-10000)
@@ -51,9 +51,9 @@ cat $pth/Masscan/masscan_pingsweep | cut -d " " -f 4 | grep -v masscan |grep -v 
 # Nmap - Pingsweep using ICMP echo, netmask, timestamp
 echo
 echo "Pingsweep using ICMP echo, netmask, timestamp"
-nmap -PE -PM -PP -R -sP -iL $target -oA $pth/Nmap/pingsweep
-cat $pth/icmpecho/pingsweep.gnmap | grep Up | cut -d ' ' -f 2 > $pth/live
-xsltproc $pth/icmpecho/pingsweep.xml -o report/pingsweep.html
+nmap -PE -PM -PP -R -sP -iL $target -oA $pth/nmap/nmap_pingsweep
+cat $pth/nmap/nmap_pingsweep.gnmap | grep Up | cut -d ' ' -f 2 > $pth/live
+xsltproc $pth/nmap/nmap_pingsweep.xml -o report/nmap_pingsweep.html
 
 # Systems that respond to ping (finding)
 echo
@@ -85,14 +85,14 @@ fi
 # Masscan - Checking the top 200 TCP/UDP ports used
 echo
 echo "Masscan - Checking the top 200 TCP/UDP ports used"
-masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $pth/masscan/masscan_output --rate 100000 $(echo ${livehosts[*]})
+masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $pth/masscan/masscan_portknock --rate 100000 $(echo ${livehosts[*]})
 
 # Nmap - Checking the top 200 TCP/UDP Ports used
 echo
 echo "Nmap - Checking the top 200 TCP/UDP ports used"
 declare -i MIN=$POffset
 for i in $(seq 0 $MAX); do
-    gnome-terminal --tab -q -- nmap -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R  --reason --resolve-all -sS -sU -sV -T4 -oA nmap_output-$i $(echo ${livehosts[$i]})
+    gnome-terminal --tab -q -- nmap -A -p $(echo ${OpenPORT[*]} | sed 's/ /,/g') -Pn -R  --reason --resolve-all -sS -sU -sV -T4 -oA nmap/nmap_portknock-$i $(echo ${livehosts[$i]})
     if (( $i == $MIN )); then 
         let "MIN+=$POffset"
         while pgrep -x nmap > /dev/null; do sleep 10; done
