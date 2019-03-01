@@ -9,6 +9,9 @@
 #              Side-note: You shouldd note this is the heavyweigh version,\n
 #              yes there is a heavyweigh (i.e., full) version available!\n
 
+# Logging 
+exec 1> >(logger -s -t $(basename $0)) 2>&1
+
 # Starting script
 echo "
   ____            _       _     _           _             _   _             

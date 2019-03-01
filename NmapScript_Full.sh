@@ -10,6 +10,19 @@
 #              Side-note: You shouldd note this is the lightweight version,\n
 #              that version skips some of the additional targeted scans.\n
 
+# Logging 
+exec 1> >(logger -s -t $(basename $0)) 2>&1
+
+# Starting script
+echo "
+  ____            _       _     _           _             _   _             
+ / ___|  ___ _ __(_)_ __ | |_  (_)___   ___| |_ __ _ _ __| |_(_)_ __   __ _ 
+ \___ \ / __| '__| | '_ \| __| | / __| / __| __/ _` | '__| __| | '_ \ / _` |
+  ___) | (__| |  | | |_) | |_  | \__ \ \__ \ || (_| | |  | |_| | | | | (_| |
+ |____/ \___|_|  |_| .__/ \__| |_|___/ |___/\__\__,_|_|   \__|_|_| |_|\__, |
+                   |_|                                                |___/  
+"
+
 # Grabbing the file name from the user
 targetf=$1
 if [ $targetf != "$(ls $PWD | grep $targetf)" ]; then
@@ -183,3 +196,13 @@ unset targetf
 unset ZFILE
 unset ZPSS
 set -u
+
+# Starting script
+echo "
+  _____           _          __                 _       _   
+ | ____|_ __   __| |   ___  / _|  ___  ___ _ __(_)_ __ | |_ 
+ |  _| | '_ \ / _` |  / _ \| |_  / __|/ __| '__| | '_ \| __|
+ | |___| | | | (_| | | (_) |  _| \__ \ (__| |  | | |_) | |_ 
+ |_____|_| |_|\__,_|  \___/|_|   |___/\___|_|  |_| .__/ \__|
+                                                 |_|          
+"
