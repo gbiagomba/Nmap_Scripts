@@ -1,14 +1,14 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Author: Gilles Biagomba
 # Program: NmapScrip_Full.sh
 # Description: This script designed to perform a port knock scan of a target network.\n
 #              It checks all 65,535 TCP/UDP ports using masscan.\n
-#              Then it performs various ICMP scans using nmap followed with further targeted scans\n
-#              Using the ports it found during the initial massscan scan we performed earlier.\n
+#              Prior to performing an nmap scan, it performs various ICMP scans.\n
+#              Then it performs further targeted scans using the ports it found during the initial scan.\n
 #              The additional targeted scan consists of TCP SYN/ACK, UDP, and firewall evation scanning.\n
 #              Lastly, the script will zip up the findings and email it to an email address you desire.\n
-#              Side-note: You shouldd note this is the lightweight version,\n
-#              that version skips some of the additional targeted scans.\n
+#              Side-note: You shouldd note this is the heavyweigh version,\n
+#              yes there is a heavyweigh (i.e., full) version available!\n
 
 # Logging 
 exec 1> >(logger -s -t $(basename $0)) 2>&1

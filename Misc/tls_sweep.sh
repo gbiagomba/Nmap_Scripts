@@ -119,7 +119,7 @@ function tls_validation()
                 echo "--------------------------------------------------" | tee -a $wrkpth/SSLScan/$IP:$PORTNUM-sslscan_output.txt $wrkpth/SSLyze/$IP:$PORTNUM-sslyze_output.txt
                 sslscan --xml=$wrkpth/SSLScan/$IP:$PORTNUM-sslscan_output.xml $IP:$PORTNUM | tee -a $wrkpth/SSLScan/$IP:$PORTNUM-sslscan_output.txt
                 sslyze --xml_out=$wrkpth/SSLyze/$IP:$PORTNUM-sslyze_output.xml --regular $IP:$PORTNUM | tee -a $wrkpth/SSLyze/$IP:$PORTNUM-sslyze_output.txt | aha -t "SSLyze Output"  >> $wrkpth/SSLyze/$IP:$PORTNUM-sslyze_output.html
-                # testssl -oa "$wrkpth/TestSSL/TLS" --append --fast --parallel --sneaky --ids-friendly $IP:$PORTNUM | tee -a $wrkpth/TestSSL/$IP:$PORTNUM-TestSSL_output.txt            
+                # testssl -oa "$wrkpth/TestSSL/TLS" --append --fast --parallel --sneaky --ids-friendly $IP:$PORTNUM | tee -a $wrkpth/TestSSL/$IP:$PORTNUM-TestSSL_output.txt
             fi
         done
     done 

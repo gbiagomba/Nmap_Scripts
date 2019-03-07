@@ -6,8 +6,8 @@
 #              Then it performs various ICMP scans using nmap followed with a targeted scan\n
 #              Using the ports it found during the initial massscan scan we performed earlier.\n
 #              Last step is to perform some firewall evation scanning.\n
-#              Side-note: You shouldd note this is the heavyweigh version,\n
-#              yes there is a heavyweigh (i.e., full) version available!\n
+#              Side-note: You should note this is the lightweight version,\n
+#              that version skips some of the additional targeted scans.\n
 
 # Logging 
 # exec 1> >(logger -s -t $(basename $0)) 2>&1
