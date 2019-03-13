@@ -73,9 +73,10 @@ declare -i MAX=$(expr ${#livehosts[@]} - 1)
 if [ "$MAX" -gt "1" ] && [ "$MAX" -lt "10" ]; then
     declare -i POffset=$MAX
 elif [ "$MAX" -gt "10" ] || [ "$MAX" -lt "0" ]; then
-    echo "How many nmap processess do you want to run?"
-    echo "Default: 5, Max: 10, Min: 1"
-    read POffset
+    # echo "How many nmap processess do you want to run?"
+    # echo "Default: 5, Max: 10, Min: 1"
+    # read POffset
+    declare -i POffset=9
     if [ "$POffset" -gt "10" ] || [ "$POffset" -lt 1 ] || [ -z "$POffset" ]; then
         echo "Incorrect value, setting offset to default"
         declare -i POffset=5
@@ -96,7 +97,7 @@ echo
 echo "Nmap - Checking the top 200 TCP/UDP ports used"
 declare -i MIN=$POffset
 for i in $(seq 0 $MAX); do
-    echo "You are scanning ${livehosts[$i]}"
+    echo "You are scanning ${livehosts[$i]}, only $(expr ${#livehosts[@]} - $i) to go"
     gnome-terminal --tab -q -- nmap -A --top-ports 200 -Pn -R --reason --resolve-all -sSUV -oA $wrkpth/nmap/nmap_portknock-$i $(echo ${livehosts[$i]})
     NmapStatus=$(echo nmap/nmap_portknock-$i.nmap | grep "QUITTING!")
     if (( $i == $MIN )); then 
