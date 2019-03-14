@@ -110,16 +110,12 @@ for i in $(seq 0 $MAX); do
 done
 
 # Nmap - Converting xml output to HTML and migrating all findings to a centralized report
-declare -i MIN=$POffset
+xsltproc $wrkpth/nmap/nmap_pingsweep.xml -o $wrkpth/report/nmap_pingsweep.html
 for i in $(seq 0 $MAX); do
     echo "Gathering scan data from ${livehosts[$i]}"
-    gnome-terminal --tab -q -- xsltproc $wrkpth/nmap/nmap_portknock-$i.xml -o $wrkpth/nmap/nmap_portknock-$i.html
-    gnome-terminal --tab -q -- cat $wrkpth/nmap/nmap_portknock-$i.nmap | tee -a $wrkpth/report/nmap_portknock.nmap
-    gnome-terminal --tab -q -- cat $wrkpth/nmap/nmap_portknock-$i.gnmap | tee -a $wrkpth/report/nmap_portknock.gnmap
-    if (( $i == $MIN )); then 
-        let "MIN+=$POffset"
-        while pgrep -x xsltproc > /dev/null; do sleep 10; done
-    fi
+    xsltproc $wrkpth/nmap/nmap_portknock-$i.xml -o $wrkpth/nmap/nmap_portknock-$i.html
+    cat $wrkpth/nmap/nmap_portknock-$i.nmap | tee -a $wrkpth/report/nmap_portknock.nmap
+    cat $wrkpth/nmap/nmap_portknock-$i.gnmap | tee -a $wrkpth/report/nmap_portknock.gnmap
 done
 
 # Nmap - Firewall evasion
@@ -141,11 +137,11 @@ unset target
 set -u
 
 # Starting script
-echo "
-  _____           _          __                 _       _   
- | ____|_ __   __| |   ___  / _|  ___  ___ _ __(_)_ __ | |_ 
- |  _| | '_ \ / _` |  / _ \| |_  / __|/ __| '__| | '_ \| __|
- | |___| | | | (_| | | (_) |  _| \__ \ (__| |  | | |_) | |_ 
- |_____|_| |_|\__,_|  \___/|_|   |___/\___|_|  |_| .__/ \__|
-                                                 |_|          
-"
+# echo "
+#   _____           _          __                 _       _   
+#  | ____|_ __   __| |   ___  / _|  ___  ___ _ __(_)_ __ | |_ 
+#  |  _| | '_ \ / _` |  / _ \| |_  / __|/ __| '__| | '_ \| __|
+#  | |___| | | | (_| | | (_) |  _| \__ \ (__| |  | | |_) | |_ 
+#  |_____|_| |_|\__,_|  \___/|_|   |___/\___|_|  |_| .__/ \__|
+#                                                  |_|          
+# "
