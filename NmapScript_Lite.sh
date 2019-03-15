@@ -13,14 +13,14 @@
 # exec 1> >(logger -s -t $(basename $0)) 2>&1
 
 # Starting script
-echo "
-  ____            _       _     _           _             _   _             
- / ___|  ___ _ __(_)_ __ | |_  (_)___   ___| |_ __ _ _ __| |_(_)_ __   __ _ 
- \___ \ / __| '__| | '_ \| __| | / __| / __| __/ _` | '__| __| | '_ \ / _` |
-  ___) | (__| |  | | |_) | |_  | \__ \ \__ \ || (_| | |  | |_| | | | | (_| |
- |____/ \___|_|  |_| .__/ \__| |_|___/ |___/\__\__,_|_|   \__|_|_| |_|\__, |
-                   |_|                                                |___/  
-"
+# echo "
+#   ____            _       _     _           _             _   _             
+#  / ___|  ___ _ __(_)_ __ | |_  (_)___   ___| |_ __ _ _ __| |_(_)_ __   __ _ 
+#  \___ \ / __| '__| | '_ \| __| | / __| / __| __/ _` | '__| __| | '_ \ / _` |
+#   ___) | (__| |  | | |_) | |_  | \__ \ \__ \ || (_| | |  | |_| | | | | (_| |
+#  |____/ \___|_|  |_| .__/ \__| |_|___/ |___/\__\__,_|_|   \__|_|_| |_|\__, |
+#                    |_|                                                |___/  
+# "
 
 # Grabbing the file name from the user
 target=$1
@@ -49,7 +49,7 @@ declare -a PORTS=(7 9 13 17 19 37 49 53 80 88 106 111 113 119 120 123 135 139 15
 # Masscan - Pingsweep
 echo
 echo "Masscan Pingsweep"
-masscan --ping -iL $target -oL $wrkpth/masscan/masscan_pingsweep
+masscan --ping --wait 10 -iL $target -oL $wrkpth/masscan/masscan_pingsweep
 cat $wrkpth/masscan/masscan_pingsweep | cut -d " " -f 4 | grep -v masscan |grep -v end | sort | uniq > $wrkpth/live
 
 # Nmap - Pingsweep using ICMP echo, netmask, timestamp
@@ -90,14 +90,14 @@ fi
 # Masscan - Checking the top 200 TCP/UDP ports used
 echo
 echo "Masscan - Checking the top 200 TCP/UDP ports used"
-masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $wrkpth/masscan/masscan_portknock --rate 10000 $(echo ${livehosts[*]})
+masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $wrkpth/masscan/masscan_portknock --wait 10 $(echo ${livehosts[*]})
 
 # Nmap - Checking the top 200 TCP/UDP Ports used
 echo
 echo "Nmap - Checking the top 200 TCP/UDP ports used"
 declare -i MIN=$POffset
 for i in $(seq 0 $MAX); do
-    echo "You are scanning ${livehosts[$i]}, only $(expr ${#livehosts[@]} - $i) to go"
+    echo "You are scanning ${livehosts[$i]}, only $(expr $(expr ${#livehosts[@]} - $i) - 1) to go"
     gnome-terminal --tab -q -- nmap -A --top-ports 200 -Pn -R --reason --resolve-all -sSUV -oA $wrkpth/nmap/nmap_portknock-$i $(echo ${livehosts[$i]})
     NmapStatus=$(echo nmap/nmap_portknock-$i.nmap | grep "QUITTING!")
     if (( $i == $MIN )); then 
@@ -110,6 +110,8 @@ for i in $(seq 0 $MAX); do
 done
 
 # Nmap - Converting xml output to HTML and migrating all findings to a centralized report
+echo
+echo "Nmap - Converting xml output to HTML and migrating all findings to a centralized report"
 xsltproc $wrkpth/nmap/nmap_pingsweep.xml -o $wrkpth/report/nmap_pingsweep.html
 for i in $(seq 0 $MAX); do
     echo "Gathering scan data from ${livehosts[$i]}"
