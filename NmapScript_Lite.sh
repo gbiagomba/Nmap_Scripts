@@ -49,13 +49,13 @@ declare -a PORTS=(7 9 13 17 19 37 49 53 80 88 106 111 113 119 120 123 135 139 15
 # Masscan - Pingsweep
 echo
 echo "Masscan Pingsweep"
-masscan --ping --wait 10 -iL $target -oL $wrkpth/masscan/masscan_pingsweep
+masscan --ping --wait 10 --rate 10000 -iL $target -oL $wrkpth/masscan/masscan_pingsweep
 cat $wrkpth/masscan/masscan_pingsweep | cut -d " " -f 4 | grep -v masscan |grep -v end | sort | uniq > $wrkpth/live
 
 # Nmap - Pingsweep using ICMP echo, netmask, timestamp
 echo
-echo "Nmap Pingsweep - ICMP echo, netmask, timestamp"
-nmap -PE -PM -PP -R -sP -iL $target -oA $wrkpth/nmap/nmap_pingsweep
+echo "Nmap Pingsweep - ICMP echo, netmask, timestamp & TCP SYN, and UDP (5 of 20)"
+nmap -PE -PM -PP -R -PS"21,22,23,25,53,80,88,110,111,135,139,443,445,8080" -PU"53,111,135,137,161,500" -PY"22,80" -T4 --reason --resolve-all -sn -iL $target -oA $wrkpth/nmap/nmap_pingsweep
 cat $wrkpth/nmap/nmap_pingsweep.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
 xsltproc $wrkpth/nmap/nmap_pingsweep.xml -o $wrkpth/report/nmap_pingsweep.html
 
@@ -90,7 +90,7 @@ fi
 # Masscan - Checking the top 200 TCP/UDP ports used
 echo
 echo "Masscan - Checking the top 200 TCP/UDP ports used"
-masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g') --open-only -oL $wrkpth/masscan/masscan_portknock --wait 10 $(echo ${livehosts[*]})
+masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g')  --rate 10000 --open-only -oL $wrkpth/masscan/masscan_portknock --wait 10 $(echo ${livehosts[*]})
 
 # Nmap - Checking the top 200 TCP/UDP Ports used
 echo
