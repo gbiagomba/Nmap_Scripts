@@ -95,12 +95,15 @@ function NM_Ping()
     # Nmap - Pingsweep using TCP SYN and UDP
     echo
     echo "Pingsweep using TCP SYN and UDP"
-    nmap -R --reason --resolve-all -sP -PS 21,22,23,25,53,80,88,110,111,135,139,443,445,8080 -iL $targetf -oA $wrkpth/TCP/pingsweepTCP
-    nmap -R --reason --resolve-all -sP -PU 53,111,135,137,161,500 -iL $targetf -oA $wrkpth/UDP/pingsweepUDP
+    nmap -R --reason --resolve-all -sn -PS21,22,23,25,53,80,88,110,111,135,139,443,445,8080 -iL $targetf -oA $wrkpth/TCP/pingsweepTCP
+    nmap -R --reason --resolve-all -sn -PU53,111,135,137,161,500 -iL $targetf -oA $wrkpth/UDP/pingsweepUDP
+    nmap -R --reason --resolve-all -sn -PY"22,80" -iL $targetf -oA $wrkpth/UDP/pingsweepSCTP
     cat $wrkpth/TCP/pingsweepTCP.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
     cat $wrkpth/UDP/pingsweepUDP.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
+    cat $wrkpth/UDP/pingsweepSCTP.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
     xsltproc $wrkpth/TCP/pingsweepTCP.xml -o $wrkpth/REPORTS/pingsweepTCP.html
     xsltproc $wrkpth/UDP/pingsweepUDP.xml -o $wrkpth/REPORTS/pingsweepUDP.html
+    xsltproc $wrkpth/UDP/pingsweepSCTP.xml -o $wrkpth/REPORTS/pingsweepSCTP.html
 
     # Systems that respond to ping (finding)
     echo

@@ -24,7 +24,7 @@
 
 # Grabbing the file name from the user
 target=$1
-if [ $target != "$(ls $PWD | grep $target)" ]; then
+if [ ! -a $target ]; then
     echo "$target does not exist, please enter a valid filename"
     echo "if a file is not specified, default is 'targets'"
     echo usage 'NmapScrip_Lite.sh targets.txt'
@@ -42,6 +42,26 @@ mkdir -p $wrkpth/nmap/ $wrkpth/masscan/ $wrkpth/report/
 # Variables - Set these
 declare -a PORTS=(7 9 13 17 19 37 49 53 80 88 106 111 113 119 120 123 135 139 158 177 179 199 389 427 443 445 465 497 500 518 520 548 554 587 593 623 626 631 646 873 990 993 995 1110 1433 1701 1720 1723 1755 1900 2000 2049 2121 2717 3000 3128 3283 3306 3389 3456 3703 3986 4444 4500 4899 5000 5009 5051 5060 5101 5190 5353 5357 5432 5631 5632 5666 5800 5900 6646 7000 7002 7004 7070 8000 8443 8888 9100 9200 10000 17185 20031 30718 31337 32768 32771 32815 33281 49156 49188 65024 1022-1023 1025-1029 1025-1030 110-111 135-139 143-144 1433-1434 161-162 1645-1646 1718-1719 1812-1813 2000-2001 2048-2049 21-23 2222-2223 25-26 32768-32769 443-445 49152-49154 49152-49157 49181-49182 49185-49186 49190-49194 49200-49201 513-515 514-515 543-544 6000-6001 67-69 79-81 8008-8009 8080-8081 996-999 9999-10000)
 
+# ------------------------------------
+# Setting  parallel stack
+# ------------------------------------
+# $(cat $wrkpth/live | sort -R | uniq))
+declare -a target=($(cat $target | sort -R | uniq))
+declare -i MAX=$(expr ${#target[@]} - 1)
+
+if [ "$MAX" -gt "1" ] && [ "$MAX" -lt "10" ]; then
+    declare -i POffset=$MAX
+elif [ "$MAX" -gt "10" ] || [ "$MAX" -lt "0" ]; then
+    # echo "How many nmap processess do you want to run?"
+    # echo "Default: 5, Max: 10, Min: 1"
+    # read POffset
+    declare -i POffset=9
+    if [ "$POffset" -gt "10" ] || [ "$POffset" -lt 1 ] || [ -z "$POffset" ]; then
+        echo "Incorrect value, setting offset to default"
+        declare -i POffset=5
+    fi
+fi
+
 # ---------------------------------
 # Ping Sweep with Masscan and Nmap
 # ---------------------------------
@@ -49,15 +69,35 @@ declare -a PORTS=(7 9 13 17 19 37 49 53 80 88 106 111 113 119 120 123 135 139 15
 # Masscan - Pingsweep
 echo
 echo "Masscan Pingsweep"
-masscan --ping --wait 10 --rate 10000 -iL $target -oL $wrkpth/masscan/masscan_pingsweep
-cat $wrkpth/masscan/masscan_pingsweep | cut -d " " -f 4 | grep -v masscan |grep -v end | sort | uniq > $wrkpth/live
+declare -i MIN=$POffset
+for i in $(seq 0 $MAX); do
+    echo "You are scanning ${target[$i]}, only $(expr $(expr ${#target[@]} - $i) - 1) to go"
+    gnome-terminal --tab -q -- masscan --ping --wait 10 --rate 25000 -oL $wrkpth/masscan/masscan_pingsweep.$i $(echo ${target[$i]})
+    cat $wrkpth/masscan/masscan_pingsweep.$i | cut -d " " -f 4 | grep -v masscan |grep -v end | sort | uniq >> $wrkpth/live
+    if (( $i == $MIN )); then 
+        let "MIN+=$POffset"
+        while pgrep -x masscan > /dev/null; do sleep 10; done
+    fi
+done
 
 # Nmap - Pingsweep using ICMP echo, netmask, timestamp
 echo
 echo "Nmap Pingsweep - ICMP echo, netmask, timestamp & TCP SYN, and UDP (5 of 20)"
-nmap -PE -PM -PP -R -PS"21,22,23,25,53,80,88,110,111,135,139,443,445,8080" -PU"53,111,135,137,161,500" -PY"22,80" -T4 --reason --resolve-all -sn -iL $target -oA $wrkpth/nmap/nmap_pingsweep
-cat $wrkpth/nmap/nmap_pingsweep.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
-xsltproc $wrkpth/nmap/nmap_pingsweep.xml -o $wrkpth/report/nmap_pingsweep.html
+declare -i MIN=$POffset
+for i in $(seq 0 $MAX); do
+    echo "You are scanning ${target[$i]}, only $(expr $(expr ${#target[@]} - $i) - 1) to go"
+    gnome-terminal --tab -q -- nmap -PE -PM -PP -R -PS"21,22,23,25,53,80,88,110,111,135,139,443,445,8080" -PU"53,111,135,137,161,500" -PY"22,80" -T4 --reason --resolve-all -sn -oA $wrkpth/nmap/nmap_pingsweep-$i $(echo ${target[$i]})
+    cat $wrkpth/nmap/nmap_pingsweep-$i.gnmap | grep Up | cut -d ' ' -f 2 >> $wrkpth/live
+    xsltproc $wrkpth/nmap/nmap_pingsweep-$i.xml -o $wrkpth/report/nmap_pingsweep-$i.html
+    NmapStatus=$(echo nmap/nmap_pingsweep-$i.nmap | grep "QUITTING!")
+    if (( $i == $MIN )); then 
+        let "MIN+=$POffset"
+        while pgrep -x nmap > /dev/null; do sleep 10; done
+    elif [ "$NmapStatus" == "QUITTING!"  ]; then
+        echo "Something want wrong with the previous scan"
+        exit
+    fi
+done
 
 # Systems that respond to ping (finding)
 echo
@@ -65,7 +105,7 @@ echo "Sorting what systems responded to our previous array of pingsweeps"
 livehosts=($(cat $wrkpth/live | sort -R | uniq))
 
 # ------------------------------------
-# Setting  parallel stack
+# Re-setting  parallel stack
 # ------------------------------------
 
 declare -i MAX=$(expr ${#livehosts[@]} - 1)
@@ -90,7 +130,15 @@ fi
 # Masscan - Checking the top 200 TCP/UDP ports used
 echo
 echo "Masscan - Checking the top 200 TCP/UDP ports used"
-masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g')  --rate 10000 --open-only -oL $wrkpth/masscan/masscan_portknock --wait 10 $(echo ${livehosts[*]})
+declare -i MIN=$POffset
+for i in $(seq 0 $MAX); do
+    echo "You are scanning ${target[$i]}, only $(expr $(expr ${#target[@]} - $i) - 1) to go"
+    gnome-terminal --tab -q -- masscan -p $(echo ${PORTS[*]} | sed 's/ /,/g')  --rate 25000 --open-only -oL $wrkpth/masscan/masscan_portknock --wait 10 $(echo ${livehosts[*]})
+    if (( $i == $MIN )); then 
+        let "MIN+=$POffset"
+        while pgrep -x masscan > /dev/null; do sleep 10; done
+    fi
+done
 
 # Nmap - Checking the top 200 TCP/UDP Ports used
 echo
